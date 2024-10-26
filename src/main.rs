@@ -1,3 +1,29 @@
+//! A command-line tool for concatenating and annotating files with Git metadata
+//!
+//! This tool walks through a directory, finds files with specified extensions,
+//! and outputs their contents along with Git commit information. Each file's
+//! content is preceded by a header containing:
+//! - The relative file path
+//! - The last Git commit hash that modified the file
+//! - The timestamp of the last update
+//!
+//! # Configuration
+//!
+//! The tool uses a TOML configuration file (default: `.amc.toml`) that specifies:
+//! - `delimiter`: String used to separate file headers from content
+//! - `extensions`: List of file extensions to process
+//!
+//! # Example Usage
+//!
+//! ```bash
+//! $ amc --dir ./src --config .amc.toml
+//! ```
+//!
+//! # Command Line Arguments
+//!
+//! - `-d, --dir`: Directory to scan (default: ".")
+//! - `-c, --config`: Path to config file (default: ".amc.toml")
+//!
 use anyhow::{Context, Result};
 use clap::Parser;
 use git2::Repository;

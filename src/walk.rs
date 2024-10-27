@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use ignore::WalkBuilder;
+use log::{debug, info};
 use std::path::{Path, PathBuf};
 
 pub struct FileWalker {
@@ -31,6 +32,9 @@ impl FileWalker {
                 .context("Failed to resolve directory path")?
         };
 
+        info!("Starting file walk in directory: {}", base_path.display());
+        info!("Looking for files with extensions: {:?}", self.extensions);
+
         // Create the builder
         let mut builder = WalkBuilder::new(&base_path);
         builder
@@ -44,6 +48,7 @@ impl FileWalker {
         // Add the gitignore file if it exists
         let gitignore_path = base_path.join(".gitignore");
         if gitignore_path.exists() {
+            info!("Found .gitignore at: {}", gitignore_path.display());
             if let Some(err) = builder.add_ignore(&gitignore_path) {
                 eprintln!("Warning: Failed to add .gitignore file: {}", err);
             }
@@ -54,7 +59,15 @@ impl FileWalker {
             .build()
             .filter_map(|entry| entry.ok())
             .filter(|entry| entry.file_type().map_or(false, |ft| ft.is_file()))
-            .filter(|entry| self.is_valid_extension(entry.path()))
+            .filter(|entry| {
+                let is_valid = self.is_valid_extension(entry.path());
+                debug!(
+                    "Checking file: {} - {}",
+                    entry.path().display(),
+                    if is_valid { "included" } else { "skipped" }
+                );
+                is_valid
+            })
             .map(|entry| {
                 let absolute_path = entry.path().to_path_buf();
                 let relative_path = absolute_path

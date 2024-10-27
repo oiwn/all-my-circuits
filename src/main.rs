@@ -26,6 +26,8 @@
 //!
 use clap::Parser;
 use git2::Repository;
+use log::{info, LevelFilter};
+use simple_logger::SimpleLogger;
 use std::fs;
 use std::path::PathBuf;
 
@@ -45,31 +47,33 @@ struct Cli {
     /// Config file path
     #[arg(short, long, default_value = ".amc.toml")]
     config: String,
-}
 
-fn get_git_info(path: &PathBuf) -> anyhow::Result<(String, String)> {
-    let repo = Repository::discover(path)?;
-    let head = repo.head()?;
-    let commit = head.peel_to_commit()?;
-
-    Ok((commit.id().to_string(), commit.time().seconds().to_string()))
+    /// Enable verbose logging
+    #[arg(short, long)]
+    verbose: bool,
 }
 
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+    setup_logging(cli.verbose);
+
     // Load config from the specified file
     let config = Config::load(&cli.config)?;
+    info!("Loaded configuration from: {}", cli.config);
 
     let walker = FileWalker::new(config.extensions);
     let files = walker.walk(&cli.dir)?;
 
     for file in files {
+        info!("Processing file: {}", file.absolute_path.display());
         let content = fs::read_to_string(&file.absolute_path)?;
 
         // Get git information
         let (commit_hash, commit_time) = get_git_info(&file.absolute_path)
             .unwrap_or(("unknown".to_string(), "unknown".to_string()));
+
+        info!("Git info - commit: {}, time: {}", commit_hash, commit_time);
 
         // Print file annotation
         println!("{}", config.llm_prompt);
@@ -84,4 +88,22 @@ fn main() -> anyhow::Result<()> {
     }
 
     Ok(())
+}
+
+fn setup_logging(verbose: bool) {
+    if verbose {
+        SimpleLogger::new()
+            .with_level(LevelFilter::Info)
+            .without_timestamps()
+            .init()
+            .unwrap();
+    }
+}
+
+fn get_git_info(path: &PathBuf) -> anyhow::Result<(String, String)> {
+    let repo = Repository::discover(path)?;
+    let head = repo.head()?;
+    let commit = head.peel_to_commit()?;
+
+    Ok((commit.id().to_string(), commit.time().seconds().to_string()))
 }

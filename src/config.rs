@@ -7,6 +7,8 @@ use std::path::Path;
 pub struct Config {
     pub delimiter: String,
     pub extensions: Vec<String>,
+    #[serde(default = "default_llm_prompt")]
+    pub llm_prompt: String,
 }
 
 impl Config {
@@ -39,8 +41,28 @@ impl Config {
         Self {
             delimiter: "---".to_string(),
             extensions: vec!["rs".to_string()],
+            llm_prompt: default_llm_prompt(),
         }
     }
+}
+
+fn default_llm_prompt() -> String {
+    r#"
+This is a concatenated source code file containing multiple source files from a project.
+Each file section begins and ends with a delimiter line "---".
+After the opening delimiter, there is metadata about the file:
+- File: relative path to the source file
+- Last commit: Git commit hash of the last change
+- Last update: Unix timestamp of the last change
+
+Please analyze the code with these aspects in mind:
+1. The relationship and dependencies between files
+2. The overall architecture and design patterns used
+3. Any potential improvements or issues you notice
+4. Consider the context of changes based on the Git metadata
+
+The code sections follow below:
+"#.trim().to_string()
 }
 
 #[cfg(test)]
@@ -70,7 +92,8 @@ mod tests {
     fn test_load_nonexistent_config() -> Result<()> {
         let config = Config::load("nonexistent-config.toml")?;
         assert_eq!(config.delimiter, "---");
-        assert_eq!(config.extensions, vec!["rs"]);
+        assert!(config.extensions.contains(&"rs".to_string()));
+        assert!(config.llm_prompt.contains("concatenated source code"));
         Ok(())
     }
 
@@ -93,5 +116,18 @@ mod tests {
         let config = Config::default();
         assert_eq!(config.delimiter, "---");
         assert_eq!(config.extensions, vec!["rs"]);
+    }
+
+    #[test]
+    fn test_custom_prompt_config() -> Result<()> {
+        let config_content = r#"
+            delimiter = "---"
+            extensions = ["rs"]
+            llm_prompt = "Custom prompt for analysis"
+        "#;
+
+        let config = Config::from_str(config_content)?;
+        assert_eq!(config.llm_prompt, "Custom prompt for analysis");
+        Ok(())
     }
 }

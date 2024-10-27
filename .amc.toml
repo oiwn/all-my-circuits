@@ -1,2 +1,14 @@
 delimiter = "---"
 extensions = [".rs", ".js", ".py"]  # Add any file extensions you want to process
+llm_prompt = """
+This is a collection of source code files from a project. Each file is separated by '---' delimiters.
+The files include Git metadata showing their last modification details.
+
+Key points for analysis:
+1. Focus on the architectural patterns used across files
+2. Identify any potential code quality issues
+3. Note the temporal relationship between changes using Git timestamps
+4. Consider suggesting improvements while maintaining the existing design philosophy
+
+Language-specific notes will be provided based on file extensions.
+"""

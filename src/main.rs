@@ -72,6 +72,7 @@ fn main() -> anyhow::Result<()> {
             .unwrap_or(("unknown".to_string(), "unknown".to_string()));
 
         // Print file annotation
+        println!("{}", config.llm_prompt);
         println!("{}", config.delimiter);
         println!("File: {}", file.relative_path.display());
         println!("Last commit: {}", commit_hash);

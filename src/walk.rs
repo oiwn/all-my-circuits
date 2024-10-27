@@ -1,6 +1,6 @@
 use anyhow::{Context, Result};
+use ignore::WalkBuilder;
 use std::path::{Path, PathBuf};
-use walkdir::WalkDir;
 
 pub struct FileWalker {
     extensions: Vec<String>,
@@ -31,12 +31,32 @@ impl FileWalker {
                 .context("Failed to resolve directory path")?
         };
 
-        let files = WalkDir::new(&base_path)
-            .into_iter()
-            .filter_map(|e| e.ok())
-            .filter(|e| self.is_valid_extension(e.path()))
-            .map(|e| {
-                let absolute_path = e.path().to_path_buf();
+        // Create the builder
+        let mut builder = WalkBuilder::new(&base_path);
+        builder
+            .hidden(false)
+            .git_ignore(true)
+            .git_global(true)
+            .git_exclude(true)
+            .require_git(false)
+            .ignore(true);
+
+        // Add the gitignore file if it exists
+        let gitignore_path = base_path.join(".gitignore");
+        if gitignore_path.exists() {
+            if let Some(err) = builder.add_ignore(&gitignore_path) {
+                eprintln!("Warning: Failed to add .gitignore file: {}", err);
+            }
+        }
+
+        // Build the walker and collect files
+        let files: Vec<FileEntry> = builder
+            .build()
+            .filter_map(|entry| entry.ok())
+            .filter(|entry| entry.file_type().map_or(false, |ft| ft.is_file()))
+            .filter(|entry| self.is_valid_extension(entry.path()))
+            .map(|entry| {
+                let absolute_path = entry.path().to_path_buf();
                 let relative_path = absolute_path
                     .strip_prefix(&base_path)
                     .map(|p| p.to_path_buf())
@@ -62,12 +82,15 @@ impl FileWalker {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs::{self, File};
-    use std::io::Write;
+    use std::fs;
     use tempfile::TempDir;
 
     fn setup_test_directory() -> Result<TempDir> {
         let temp_dir = TempDir::new()?;
+
+        // First create .gitignore file
+        let gitignore_content = "*.txt\ntarget/\n.git/\n";
+        fs::write(temp_dir.path().join(".gitignore"), gitignore_content)?;
 
         // Create some test files with different extensions
         let files = vec![
@@ -83,8 +106,7 @@ mod tests {
             if let Some(parent) = full_path.parent() {
                 fs::create_dir_all(parent)?;
             }
-            let mut file = File::create(full_path)?;
-            file.write_all(content.as_bytes())?;
+            fs::write(full_path, content)?;
         }
 
         Ok(temp_dir)
@@ -103,6 +125,37 @@ mod tests {
         // Verify all found files have .rs extension
         for file in files {
             assert_eq!(file.absolute_path.extension().unwrap(), "rs");
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_gitignore_respecting() -> Result<()> {
+        let temp_dir = setup_test_directory()?;
+
+        // Create a file in target directory
+        fs::create_dir_all(temp_dir.path().join("target"))?;
+        fs::write(temp_dir.path().join("target/ignored.rs"), "ignored content")?;
+
+        let walker = FileWalker::new(vec!["rs".to_string(), "txt".to_string()]);
+        let files = walker.walk(temp_dir.path())?;
+
+        // Print debug information
+        println!("Files found:");
+        for file in &files {
+            println!("  {:?}", file.relative_path);
+        }
+
+        // Should not find .txt files or files in target/
+        for file in &files {
+            let path_str = file.relative_path.to_string_lossy();
+            assert!(
+                !path_str.contains("target/"),
+                "Found file in target/: {}",
+                path_str
+            );
+            assert!(!path_str.ends_with(".txt"), "Found .txt file: {}", path_str);
         }
 
         Ok(())

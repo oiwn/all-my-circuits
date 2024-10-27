@@ -1,6 +1,6 @@
 [package]
 name = "all-my-circuits"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 
 authors = ["oiwn <your.email@example.com>"]

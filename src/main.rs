@@ -24,15 +24,15 @@
 //! - `-d, --dir`: Directory to scan (default: ".")
 //! - `-c, --config`: Path to config file (default: ".amc.toml")
 //!
-use anyhow::{Context, Result};
 use clap::Parser;
 use git2::Repository;
-use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
 
+mod config;
 mod walk;
 
+use config::Config;
 use walk::FileWalker;
 
 #[derive(Parser)]
@@ -47,13 +47,7 @@ struct Cli {
     config: String,
 }
 
-#[derive(Deserialize)]
-struct Config {
-    delimiter: String,
-    extensions: Vec<String>,
-}
-
-fn get_git_info(path: &PathBuf) -> Result<(String, String)> {
+fn get_git_info(path: &PathBuf) -> anyhow::Result<(String, String)> {
     let repo = Repository::discover(path)?;
     let head = repo.head()?;
     let commit = head.peel_to_commit()?;
@@ -61,14 +55,11 @@ fn get_git_info(path: &PathBuf) -> Result<(String, String)> {
     Ok((commit.id().to_string(), commit.time().seconds().to_string()))
 }
 
-fn main() -> Result<()> {
+fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     // Load config from the specified file
-    let config_content = fs::read_to_string(&cli.config)
-        .context(format!("Failed to read config file: {}", cli.config))?;
-    let config: Config =
-        toml::from_str(&config_content).context("Failed to parse config")?;
+    let config = Config::load(&cli.config)?;
 
     let walker = FileWalker::new(config.extensions);
     let files = walker.walk(&cli.dir)?;

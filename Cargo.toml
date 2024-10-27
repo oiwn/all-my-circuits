@@ -1,18 +1,50 @@
 [package]
 name = "all-my-circuits"
-version = "0.1.2"
+version = "0.1.3"
 edition = "2021"
+
+authors = ["oiwn <your.email@example.com>"]
+description = "A command-line tool for concatenating and annotating files with Git metadata"
+readme = "README.md"
+homepage = "https://github.com/oiwn/all-my-circuits"
+repository = "https://github.com/oiwn/all-my-circuits"
+license = "MIT"
+keywords = ["git", "cli", "concatenate", "files", "metadata"]
+categories = ["command-line-utilities", "development-tools"]
+
+exclude = [
+    "tmp/*",
+    "html/*",
+    ".github/*",
+    ".gitignore",
+    ".tmuxp.yaml",
+    "notes.org"
+    "output.txt"
+]
+
 
 [dependencies]
 anyhow = "1"
 chrono = "0.4"
 clap = { version = "4.5", features = ["derive"] }
 git2 = "0.19"
-ignore = "0.4.23"
-log = "0.4.22"
+ignore = "0.4"
+log = "0.4"
 serde = { version = "1.0", features = ["derive"] }
+simple_logger = "5.0"
 toml = "0.8"
 walkdir = "2.5"
 
 [dev-dependencies]
-tempfile = "3.13.0"
+tempfile = "3.13"
+
+[[bin]]
+name = "amc"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true 
+

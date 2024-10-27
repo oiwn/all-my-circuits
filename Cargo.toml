@@ -18,8 +18,8 @@ exclude = [
     ".github/*",
     ".gitignore",
     ".tmuxp.yaml",
-    "notes.org"
-    "output.txt"
+    "notes.org",
+    "output.txt",
 ]
 
 

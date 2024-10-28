@@ -74,6 +74,8 @@ fn main() -> anyhow::Result<()> {
     let walker = FileWalker::new(config.extensions);
     let files = walker.walk(&cli.dir)?;
 
+    println!("{}", config.llm_prompt);
+
     for file in files {
         info!("Processing file: {}", file.absolute_path.display());
         let content = fs::read_to_string(&file.absolute_path)?;
@@ -85,7 +87,6 @@ fn main() -> anyhow::Result<()> {
         info!("Git info - commit: {}, time: {}", commit_hash, commit_time);
 
         // Print file annotation
-        println!("{}", config.llm_prompt);
         println!("{}", config.delimiter);
         println!("File: {}", file.relative_path.display());
         println!("Last commit: {}", commit_hash);

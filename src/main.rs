@@ -56,6 +56,15 @@ struct Cli {
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
+    // Check if the directory is a Git repository
+    if !is_git_repository(&cli.dir) {
+        return Err(anyhow::anyhow!(
+            "The specified directory '{}' is not a Git repository or within one. \
+            This tool only works with Git-managed directories.",
+            cli.dir
+        ));
+    }
+
     setup_logging(cli.verbose);
 
     // Load config from the specified file
@@ -106,4 +115,8 @@ fn get_git_info(path: &PathBuf) -> anyhow::Result<(String, String)> {
     let commit = head.peel_to_commit()?;
 
     Ok((commit.id().to_string(), commit.time().seconds().to_string()))
+}
+
+fn is_git_repository(path: &str) -> bool {
+    Repository::discover(path).is_ok()
 }

@@ -19,12 +19,12 @@ but WHEN and WHY it was written!
 ## Installation
 
 ```bash
-cargo install amc
+cargo install all-my-circuits
 ```
 
 ## Quick Start
 
-1. Create a configuration file `.amc.toml`:
+1. Create a configuration file `.amc.toml` (in current directory):
 
 ```toml
 delimiter = "---"

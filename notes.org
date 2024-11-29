@@ -1,0 +1,5 @@
+#+title: Notes
+
+* Features
+- [ ] detect if project is Rust project
+- [ ] Parse just signatures and structure for Rust files

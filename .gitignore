@@ -28,4 +28,4 @@ Cargo.lock
 # misc
 .DS_Store
 .tmuxp.yaml
-output.txt
+**/*.code

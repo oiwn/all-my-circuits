@@ -32,7 +32,7 @@ jobs:
         run: cargo check --all-features
         
       - name: Run unit tests
-        run: cargo test --lib --all-features
+        run: cargo test --all-features
         
       # - name: Run integration tests
         # run: cargo test --test '*' --all-features --workspace

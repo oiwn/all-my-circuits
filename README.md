@@ -1,3 +1,6 @@
+[![codecov](https://codecov.io/gh/oiwn/all-my-circuits/graph/badge.svg?token=RQJ86YJPL0)](https://codecov.io/gh/oiwn/all-my-circuits)
+[![dependency status](https://deps.rs/repo/github/oiwn/all-my-circuits/status.svg)](https://deps.rs/repo/github/oiwn/all-my-circuits)
+
 # File Concatenator with Git Metadata
 
 🚀 BLAZINGLY FAST 🚀 file concatenator built with 🦀 Rust 🦀! ⚡️ Combines your

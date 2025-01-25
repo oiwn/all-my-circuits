@@ -1,6 +1,6 @@
 [package]
 name = "all-my-circuits"
-version = "0.1.6"
+version = "0.1.7"
 edition = "2021"
 
 authors = ["oiwn <your.email@example.com>"]
@@ -37,7 +37,7 @@ toml = "0.8"
 walkdir = "2.5"
 
 [dev-dependencies]
-tempfile = "3.13"
+tempfile = "3"
 
 [[bin]]
 name = "amc"

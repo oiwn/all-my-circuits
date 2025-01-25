@@ -3,6 +3,8 @@ use ignore::WalkBuilder;
 use log::{debug, info};
 use std::path::{Path, PathBuf};
 
+const EXCLUDED_FILES: &[&str] = &[".amc.toml"];
+
 pub struct FileWalker {
     extensions: Vec<String>,
 }
@@ -58,7 +60,7 @@ impl FileWalker {
         let files: Vec<FileEntry> = builder
             .build()
             .filter_map(|entry| entry.ok())
-            .filter(|entry| entry.file_type().map_or(false, |ft| ft.is_file()))
+            .filter(|entry| entry.file_type().is_some_and(|ft| ft.is_file()))
             .filter(|entry| {
                 let is_valid = self.is_valid_extension(entry.path());
                 debug!(
@@ -85,6 +87,11 @@ impl FileWalker {
     }
 
     fn is_valid_extension(&self, path: &Path) -> bool {
+        if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
+            if EXCLUDED_FILES.contains(&file_name) {
+                return false;
+            }
+        }
         path.extension()
             .and_then(|ext| ext.to_str())
             .map(|ext| self.extensions.iter().any(|allowed_ext| allowed_ext == ext))
@@ -192,6 +199,24 @@ mod tests {
             assert_eq!(
                 temp_dir.path().join(&file.relative_path).canonicalize()?,
                 file.absolute_path.canonicalize()?
+            );
+        }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_exclude_config_file() -> Result<()> {
+        let temp_dir = setup_test_directory()?;
+        fs::write(temp_dir.path().join(".amc.toml"), "content")?;
+
+        let walker = FileWalker::new(vec!["toml".to_string()]);
+        let files = walker.walk(temp_dir.path())?;
+
+        for file in &files {
+            assert_ne!(
+                file.relative_path.file_name().unwrap().to_str().unwrap(),
+                ".amc.toml"
             );
         }
 

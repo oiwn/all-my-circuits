@@ -28,7 +28,7 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Run unit tests only
-        run: cargo test --lib --workspace --no-default-features
+        run: cargo test --workspace --no-default-features
 
   coverage:
     name: Code coverage

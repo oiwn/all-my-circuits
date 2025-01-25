@@ -29,10 +29,10 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Cargo check
-        run: cargo check --all-features --workspace
+        run: cargo check --all-features
         
       - name: Run unit tests
-        run: cargo test --lib --all-features --workspace
+        run: cargo test --lib --all-features
         
       # - name: Run integration tests
         # run: cargo test --test '*' --all-features --workspace

@@ -1,5 +1,13 @@
 #+title: Notes
 
 * Features
+- [X] if .toml file included into .amc.toml file explode .amc.toml itself
 - [ ] detect if project is Rust project
-- [ ] Parse just signatures and structure for Rust files
+- [ ] Parse signatures and structures for Rust files
+
+* Priorities and Tokens
+- [ ] figure out how to handle rage projects
+- [ ] split with priorities
+- [ ] control the size
+
+* Figure out if it's possible to quickly build map of tags

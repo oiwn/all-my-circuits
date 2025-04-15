@@ -1,5 +1,6 @@
 [![codecov](https://codecov.io/gh/oiwn/all-my-circuits/graph/badge.svg?token=RQJ86YJPL0)](https://codecov.io/gh/oiwn/all-my-circuits)
 [![dependency status](https://deps.rs/repo/github/oiwn/all-my-circuits/status.svg)](https://deps.rs/repo/github/oiwn/all-my-circuits)
+![Crates.io Total Downloads](https://img.shields.io/crates/d/all-my-circuits)
 
 # File Concatenator with Git Metadata
 
@@ -31,17 +32,20 @@ cargo install all-my-circuits
 
 ```toml
 delimiter = "---"
-extensions = ["rs", "ts", "py"]
+extensions = [".rs", ".ts", ".py"]
 ```
 
 2. Run the tool:
 
 ```bash
-# Scan current directory with default config
+# Scan current directory with default config (outputs to code.txt)
 amc
 
-# Scan specific directory with custom config
-amc --dir ./src --config custom-config.toml
+# Specify custom output file
+amc output.txt
+
+# Scan specific directory with custom config and output file
+amc custom-output.txt --dir ./src --config custom-config.toml
 ```
 
 ## Output Format
@@ -67,13 +71,15 @@ Last update: 1729838996
 ## CLI Options
 
 ```
-Usage: amc [OPTIONS]
-
+Usage: amc [OUTPUT] [OPTIONS]
+Arguments:
+  [OUTPUT]             Output file path [default: code.txt]
 Options:
   -d, --dir <DIR>      Directory to scan [default: .]
   -c, --config <FILE>  Config file path [default: .amc.toml]
-  -h, --help          Print help
-  -V, --version       Print version
+  -v, --verbose        Enable verbose logging
+  -h, --help           Print help
+  -V, --version        Print version
 ```
 
 ## Configuration

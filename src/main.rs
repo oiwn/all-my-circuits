@@ -16,19 +16,26 @@
 //! # Example Usage
 //!
 //! ```bash
-//! $ amc --dir ./src --config .amc.toml
+//! $ amc output.txt --dir ./src --config .amc.toml
+//! ```
+//!
+//! Or with default output file (code.txt):
+//!
+//! ```bash
+//! $ amc --dir ./src
 //! ```
 //!
 //! # Command Line Arguments
 //!
+//! - `[OUTPUT]`: Output file path (default: "code.txt")
 //! - `-d, --dir`: Directory to scan (default: ".")
 //! - `-c, --config`: Path to config file (default: ".amc.toml")
-//!
 use clap::Parser;
 use git2::Repository;
 use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 use std::fs;
+use std::io::Write;
 use std::path::PathBuf;
 
 mod config;
@@ -40,6 +47,10 @@ use walk::FileWalker;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    /// Output file path (defaults to "code.txt" if not specified)
+    #[arg(default_value = "code.txt")]
+    output: String,
+
     /// Directory to scan
     #[arg(short, long, default_value = ".")]
     dir: String,
@@ -74,7 +85,11 @@ fn main() -> anyhow::Result<()> {
     let walker = FileWalker::new(config.extensions);
     let files = walker.walk(&cli.dir)?;
 
-    println!("{}", config.llm_prompt);
+    // Create or open the output file
+    let mut output_file = fs::File::create(&cli.output)?;
+    info!("Writing output to file: {}", cli.output);
+
+    writeln!(output_file, "{}", config.llm_prompt)?;
 
     for file in files {
         info!("Processing file: {}", file.absolute_path.display());
@@ -87,14 +102,14 @@ fn main() -> anyhow::Result<()> {
         info!("Git info - commit: {}, time: {}", commit_hash, commit_time);
 
         // Print file annotation
-        println!("{}", config.delimiter);
-        println!("File: {}", file.relative_path.display());
-        println!("Last commit: {}", commit_hash);
-        println!("Last update: {}", commit_time);
-        println!("{}", config.delimiter);
+        writeln!(output_file, "{}", config.delimiter)?;
+        writeln!(output_file, "File: {}", file.relative_path.display())?;
+        writeln!(output_file, "Last commit: {}", commit_hash)?;
+        writeln!(output_file, "Last update: {}", commit_time)?;
+        writeln!(output_file, "{}", config.delimiter)?;
 
         // Print file content
-        println!("{}\n", content);
+        writeln!(output_file, "{}\n", content)?;
     }
 
     Ok(())

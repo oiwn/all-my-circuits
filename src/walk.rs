@@ -7,6 +7,7 @@ const EXCLUDED_FILES: &[&str] = &[".amc.toml"];
 
 pub struct FileWalker {
     extensions: Vec<String>,
+    excluded_folders: Vec<String>,
 }
 
 #[derive(Debug)]
@@ -16,12 +17,13 @@ pub struct FileEntry {
 }
 
 impl FileWalker {
-    pub fn new(extensions: Vec<String>) -> Self {
+    pub fn new(extensions: Vec<String>, excluded_folders: Vec<String>) -> Self {
         Self {
             extensions: extensions
                 .into_iter()
                 .map(|ext| ext.trim_start_matches('.').to_string())
                 .collect(),
+            excluded_folders,
         }
     }
 
@@ -61,6 +63,7 @@ impl FileWalker {
             .build()
             .filter_map(|entry| entry.ok())
             .filter(|entry| entry.file_type().is_some_and(|ft| ft.is_file()))
+            .filter(|entry| !self.is_excluded_directory(entry.path())) // Add this line
             .filter(|entry| {
                 let is_valid = self.is_valid_extension(entry.path());
                 debug!(
@@ -83,6 +86,33 @@ impl FileWalker {
             })
             .collect();
 
+        // Build the walker and collect files
+        /* let files: Vec<FileEntry> = builder
+        .build()
+        .filter_map(|entry| entry.ok())
+        .filter(|entry| entry.file_type().is_some_and(|ft| ft.is_file()))
+        .filter(|entry| {
+            let is_valid = self.is_valid_extension(entry.path());
+            debug!(
+                "Checking file: {} - {}",
+                entry.path().display(),
+                if is_valid { "included" } else { "skipped" }
+            );
+            is_valid
+        })
+        .map(|entry| {
+            let absolute_path = entry.path().to_path_buf();
+            let relative_path = absolute_path
+                .strip_prefix(&base_path)
+                .map(|p| p.to_path_buf())
+                .unwrap_or_else(|_| absolute_path.clone());
+            FileEntry {
+                absolute_path,
+                relative_path,
+            }
+        })
+        .collect(); */
+
         Ok(files)
     }
 
@@ -96,6 +126,19 @@ impl FileWalker {
             .and_then(|ext| ext.to_str())
             .map(|ext| self.extensions.iter().any(|allowed_ext| allowed_ext == ext))
             .unwrap_or(false)
+    }
+
+    fn is_excluded_directory(&self, path: &Path) -> bool {
+        if self.excluded_folders.is_empty() {
+            return false;
+        }
+
+        // Check if any parent directory component matches excluded folders
+        path.ancestors()
+            .filter_map(|ancestor| ancestor.file_name()?.to_str())
+            .any(|folder_name| {
+                self.excluded_folders.contains(&folder_name.to_string())
+            })
     }
 }
 
@@ -135,7 +178,7 @@ mod tests {
     #[test]
     fn test_walk_with_extensions() -> Result<()> {
         let temp_dir = setup_test_directory()?;
-        let walker = FileWalker::new(vec!["rs".to_string()]);
+        let walker = FileWalker::new(vec!["rs".to_string()], vec![]);
 
         let files = walker.walk(temp_dir.path())?;
 
@@ -158,7 +201,8 @@ mod tests {
         fs::create_dir_all(temp_dir.path().join("target"))?;
         fs::write(temp_dir.path().join("target/ignored.rs"), "ignored content")?;
 
-        let walker = FileWalker::new(vec!["rs".to_string(), "txt".to_string()]);
+        let walker =
+            FileWalker::new(vec!["rs".to_string(), "txt".to_string()], vec![]);
         let files = walker.walk(temp_dir.path())?;
 
         // Print debug information
@@ -184,7 +228,7 @@ mod tests {
     #[test]
     fn test_relative_paths() -> Result<()> {
         let temp_dir = setup_test_directory()?;
-        let walker = FileWalker::new(vec!["rs".to_string()]);
+        let walker = FileWalker::new(vec!["rs".to_string()], vec![]);
 
         let files = walker.walk(temp_dir.path())?;
 
@@ -210,7 +254,7 @@ mod tests {
         let temp_dir = setup_test_directory()?;
         fs::write(temp_dir.path().join(".amc.toml"), "content")?;
 
-        let walker = FileWalker::new(vec!["toml".to_string()]);
+        let walker = FileWalker::new(vec!["toml".to_string()], vec![]);
         let files = walker.walk(temp_dir.path())?;
 
         for file in &files {
@@ -219,6 +263,61 @@ mod tests {
                 ".amc.toml"
             );
         }
+
+        Ok(())
+    }
+
+    #[test]
+    fn test_exclude_folders() -> Result<()> {
+        let temp_dir = TempDir::new()?;
+
+        // Create directory structure
+        let files = vec![
+            ("src/main.rs", "main content"),
+            ("src/lib.rs", "lib content"),
+            ("target/debug/app.rs", "debug content"),
+            ("target/release/app.rs", "release content"),
+            ("docs/target/example.rs", "docs example"), // nested 'target' folder
+            ("other/file.rs", "other content"),
+        ];
+
+        for (path, content) in files {
+            let full_path = temp_dir.path().join(path);
+            if let Some(parent) = full_path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(full_path, content)?;
+        }
+
+        // Test excluding 'target' folder
+        let walker =
+            FileWalker::new(vec!["rs".to_string()], vec!["target".to_string()]);
+        let files = walker.walk(temp_dir.path())?;
+
+        println!("Files found:");
+        for file in &files {
+            println!("  {:?}", file.relative_path);
+        }
+
+        // Should find: src/main.rs, src/lib.rs, other/file.rs
+        // Should NOT find: target/debug/app.rs, target/release/app.rs
+        // Question: Should it find docs/target/example.rs?
+
+        let found_paths: Vec<String> = files
+            .iter()
+            .map(|f| f.relative_path.to_string_lossy().to_string())
+            .collect();
+
+        assert!(found_paths.contains(&"src/main.rs".to_string()));
+        assert!(found_paths.contains(&"src/lib.rs".to_string()));
+        assert!(found_paths.contains(&"other/file.rs".to_string()));
+
+        // These should be excluded
+        assert!(!found_paths.iter().any(|p| p.contains("target/debug")));
+        assert!(!found_paths.iter().any(|p| p.contains("target/release")));
+
+        // The key question: should docs/target/example.rs be excluded?
+        // Current implementation would exclude it, but maybe we want only top-level exclusion?
 
         Ok(())
     }

@@ -9,6 +9,8 @@ pub struct Config {
     pub extensions: Vec<String>,
     #[serde(default = "default_llm_prompt")]
     pub llm_prompt: String,
+    #[serde(default)]
+    pub excluded_folders: Vec<String>,
 }
 
 impl Config {
@@ -42,6 +44,7 @@ impl Config {
             delimiter: "---".to_string(),
             extensions: vec!["rs".to_string()],
             llm_prompt: default_llm_prompt(),
+            excluded_folders: Vec::new(),
         }
     }
 }

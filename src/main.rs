@@ -32,7 +32,7 @@
 //! - `-c, --config`: Path to config file (default: ".amc.toml")
 use clap::Parser;
 use git2::Repository;
-use log::{info, LevelFilter};
+use log::{LevelFilter, info};
 use simple_logger::SimpleLogger;
 use std::fs;
 use std::io::Write;
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
     let config = Config::load(&cli.config)?;
     info!("Loaded configuration from: {}", cli.config);
 
-    let walker = FileWalker::new(config.extensions);
+    let walker = FileWalker::new(config.extensions, config.excluded_folders);
     let files = walker.walk(&cli.dir)?;
 
     // Create or open the output file

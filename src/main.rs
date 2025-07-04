@@ -87,12 +87,12 @@ fn main() -> anyhow::Result<()> {
         match command {
             Commands::Init { output } => {
                 if Path::new(&output).exists() {
-                    eprintln!("Config file already exists at: {}", output);
+                    eprintln!("Config file already exists at: {output}");
                     return Ok(());
                 }
 
                 Config::write_default(&output)?;
-                println!("Created default config file: {}", output);
+                println!("Created default config file: {output}");
                 return Ok(());
             }
         }

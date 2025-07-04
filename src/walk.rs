@@ -86,33 +86,6 @@ impl FileWalker {
             })
             .collect();
 
-        // Build the walker and collect files
-        /* let files: Vec<FileEntry> = builder
-        .build()
-        .filter_map(|entry| entry.ok())
-        .filter(|entry| entry.file_type().is_some_and(|ft| ft.is_file()))
-        .filter(|entry| {
-            let is_valid = self.is_valid_extension(entry.path());
-            debug!(
-                "Checking file: {} - {}",
-                entry.path().display(),
-                if is_valid { "included" } else { "skipped" }
-            );
-            is_valid
-        })
-        .map(|entry| {
-            let absolute_path = entry.path().to_path_buf();
-            let relative_path = absolute_path
-                .strip_prefix(&base_path)
-                .map(|p| p.to_path_buf())
-                .unwrap_or_else(|_| absolute_path.clone());
-            FileEntry {
-                absolute_path,
-                relative_path,
-            }
-        })
-        .collect(); */
-
         Ok(files)
     }
 
@@ -308,11 +281,24 @@ mod tests {
             .map(|f| f.relative_path.to_string_lossy().to_string())
             .collect();
 
-        assert!(found_paths.contains(&"src/main.rs".to_string()));
-        assert!(found_paths.contains(&"src/lib.rs".to_string()));
-        assert!(found_paths.contains(&"other/file.rs".to_string()));
+        assert!(
+            found_paths
+                .iter()
+                .any(|p| Path::new(p) == Path::new("src/main.rs"))
+        );
+        assert!(
+            found_paths
+                .iter()
+                .any(|p| Path::new(p) == Path::new("src/lib.rs"))
+        );
+        assert!(
+            found_paths
+                .iter()
+                .any(|p| Path::new(p) == Path::new("other/file.rs"))
+        );
 
         // These should be excluded
+        assert!(!found_paths.iter().any(|p| p.contains("target")));
         assert!(!found_paths.iter().any(|p| p.contains("target/debug")));
         assert!(!found_paths.iter().any(|p| p.contains("target/release")));
 

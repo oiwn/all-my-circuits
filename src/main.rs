@@ -30,13 +30,15 @@
 //! - `[OUTPUT]`: Output file path (default: "code.txt")
 //! - `-d, --dir`: Directory to scan (default: ".")
 //! - `-c, --config`: Path to config file (default: ".amc.toml")
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use git2::Repository;
 use log::{LevelFilter, info};
 use simple_logger::SimpleLogger;
-use std::fs;
-use std::io::Write;
-use std::path::PathBuf;
+use std::{
+    fs,
+    io::Write,
+    path::{Path, PathBuf},
+};
 
 mod config;
 mod walk;
@@ -47,6 +49,9 @@ use walk::FileWalker;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Commands>,
+
     /// Output file path (defaults to "code.txt" if not specified)
     #[arg(default_value = "code.txt")]
     output: String,
@@ -64,8 +69,34 @@ struct Cli {
     verbose: bool,
 }
 
+#[derive(Subcommand)]
+enum Commands {
+    /// Generate a default configuration file
+    Init {
+        /// Path where to create the config file
+        #[arg(short, long, default_value = ".amc.toml")]
+        output: String,
+    },
+}
+
 fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
+    // Handle subcommands first
+    if let Some(command) = cli.command {
+        match command {
+            Commands::Init { output } => {
+                if Path::new(&output).exists() {
+                    eprintln!("Config file already exists at: {}", output);
+                    return Ok(());
+                }
+
+                Config::write_default(&output)?;
+                println!("Created default config file: {}", output);
+                return Ok(());
+            }
+        }
+    }
 
     // Check if the directory is a Git repository
     if !is_git_repository(&cli.dir) {

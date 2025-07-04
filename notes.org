@@ -11,3 +11,8 @@
 - [ ] control the size
 
 * Figure out if it's possible to quickly build map of tags
+
+* Tasks
+** proper builder for FileWalker::new()
+args should be passed as struct:
+    pub fn new(extensions: Vec<String>, excluded_folders: Vec<String>) -> Self {

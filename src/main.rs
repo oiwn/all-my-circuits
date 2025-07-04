@@ -32,7 +32,7 @@
 //! - `-c, --config`: Path to config file (default: ".amc.toml")
 use clap::Parser;
 use git2::Repository;
-use log::{info, LevelFilter};
+use log::{LevelFilter, info};
 use simple_logger::SimpleLogger;
 use std::fs;
 use std::io::Write;
@@ -82,7 +82,7 @@ fn main() -> anyhow::Result<()> {
     let config = Config::load(&cli.config)?;
     info!("Loaded configuration from: {}", cli.config);
 
-    let walker = FileWalker::new(config.extensions);
+    let walker = FileWalker::new(config.extensions, config.excluded_folders);
     let files = walker.walk(&cli.dir)?;
 
     // Create or open the output file
@@ -99,17 +99,17 @@ fn main() -> anyhow::Result<()> {
         let (commit_hash, commit_time) = get_git_info(&file.absolute_path)
             .unwrap_or(("unknown".to_string(), "unknown".to_string()));
 
-        info!("Git info - commit: {}, time: {}", commit_hash, commit_time);
+        info!("Git info - commit: {commit_hash}, time: {commit_time}");
 
         // Print file annotation
         writeln!(output_file, "{}", config.delimiter)?;
         writeln!(output_file, "File: {}", file.relative_path.display())?;
-        writeln!(output_file, "Last commit: {}", commit_hash)?;
-        writeln!(output_file, "Last update: {}", commit_time)?;
+        writeln!(output_file, "Last commit: {commit_hash}")?;
+        writeln!(output_file, "Last update: {commit_time}")?;
         writeln!(output_file, "{}", config.delimiter)?;
 
         // Print file content
-        writeln!(output_file, "{}\n", content)?;
+        writeln!(output_file, "{content}\n")?;
     }
 
     Ok(())

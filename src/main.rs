@@ -99,17 +99,17 @@ fn main() -> anyhow::Result<()> {
         let (commit_hash, commit_time) = get_git_info(&file.absolute_path)
             .unwrap_or(("unknown".to_string(), "unknown".to_string()));
 
-        info!("Git info - commit: {}, time: {}", commit_hash, commit_time);
+        info!("Git info - commit: {commit_hash}, time: {commit_time}");
 
         // Print file annotation
         writeln!(output_file, "{}", config.delimiter)?;
         writeln!(output_file, "File: {}", file.relative_path.display())?;
-        writeln!(output_file, "Last commit: {}", commit_hash)?;
-        writeln!(output_file, "Last update: {}", commit_time)?;
+        writeln!(output_file, "Last commit: {commit_hash}")?;
+        writeln!(output_file, "Last update: {commit_time}")?;
         writeln!(output_file, "{}", config.delimiter)?;
 
         // Print file content
-        writeln!(output_file, "{}\n", content)?;
+        writeln!(output_file, "{content}\n")?;
     }
 
     Ok(())

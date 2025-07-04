@@ -54,7 +54,7 @@ impl FileWalker {
         if gitignore_path.exists() {
             info!("Found .gitignore at: {}", gitignore_path.display());
             if let Some(err) = builder.add_ignore(&gitignore_path) {
-                eprintln!("Warning: Failed to add .gitignore file: {}", err);
+                eprintln!("Warning: Failed to add .gitignore file: {err}");
             }
         }
 

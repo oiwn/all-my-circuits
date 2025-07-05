@@ -1,9 +1,9 @@
 use anyhow::{Context, Result};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
     pub delimiter: String,
     pub extensions: Vec<String>,
@@ -46,6 +46,24 @@ impl Config {
             llm_prompt: default_llm_prompt(),
             excluded_folders: Vec::new(),
         }
+    }
+
+    /// Generate default configuration as TOML string
+    pub fn to_toml(&self) -> Result<String> {
+        toml::to_string_pretty(self).context("Failed to serialize config to TOML")
+    }
+
+    /// Write default configuration to file
+    pub fn write_default<P: AsRef<Path>>(path: P) -> Result<()> {
+        let default_config = Self::default();
+        let toml_content = default_config.to_toml()?;
+
+        fs::write(&path, toml_content).context(format!(
+            "Failed to write config file: {}",
+            path.as_ref().display()
+        ))?;
+
+        Ok(())
     }
 }
 

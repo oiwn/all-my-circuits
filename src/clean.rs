@@ -35,14 +35,14 @@ pub fn handle_clean_command(
 
     // Create backup if requested
     if backup && output_path == input {
-        let backup_path = format!("{}.backup", input);
+        let backup_path = format!("{input}.backup");
         fs::copy(&input, &backup_path)?;
-        println!("Created backup: {}", backup_path);
+        println!("Created backup: {backup_path}");
     }
 
     // Write cleaned content
     fs::write(output_path, cleaned_content)?;
-    println!("Cleaned file written to: {}", output_path);
+    println!("Cleaned file written to: {output_path}");
 
     Ok(())
 }
@@ -56,8 +56,10 @@ struct CleanStats {
 }
 
 fn clean_content(buffer: &[u8], collect_stats: bool) -> (String, CleanStats) {
-    let mut stats = CleanStats::default();
-    stats.total_bytes = buffer.len();
+    let mut stats = CleanStats {
+        total_bytes: buffer.len(),
+        ..Default::default()
+    };
 
     let mut cleaned = Vec::new();
     let mut current_line_affected = false;

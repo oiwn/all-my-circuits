@@ -40,6 +40,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+mod clean;
 mod config;
 mod walk;
 
@@ -77,6 +78,23 @@ enum Commands {
         #[arg(short, long, default_value = ".amc.toml")]
         output: String,
     },
+    /// Clean null bytes and control characters from concatenated file
+    Clean {
+        /// Input file to clean
+        input: String,
+        /// Output file (default: overwrite input)
+        #[arg(short, long)]
+        output: Option<String>,
+        /// Create backup before cleaning
+        #[arg(short, long)]
+        backup: bool,
+        /// Show cleaning report
+        #[arg(short, long)]
+        report: bool,
+        /// Show what would be cleaned without doing it
+        #[arg(long)]
+        dry_run: bool,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
@@ -94,6 +112,17 @@ fn main() -> anyhow::Result<()> {
                 Config::write_default(&output)?;
                 println!("Created default config file: {output}");
                 return Ok(());
+            }
+            Commands::Clean {
+                input,
+                output,
+                backup,
+                report,
+                dry_run,
+            } => {
+                return clean::handle_clean_command(
+                    input, output, backup, report, dry_run,
+                );
             }
         }
     }

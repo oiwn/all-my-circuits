@@ -42,6 +42,7 @@ use std::{
 
 mod clean;
 mod config;
+mod tui;
 mod walk;
 
 use config::Config;
@@ -78,6 +79,7 @@ enum Commands {
         #[arg(short, long, default_value = ".amc.toml")]
         output: String,
     },
+    Tui,
     /// Clean null bytes and control characters from concatenated file
     Clean {
         /// Input file to clean
@@ -111,6 +113,11 @@ fn main() -> anyhow::Result<()> {
 
                 Config::write_default(&output)?;
                 println!("Created default config file: {output}");
+                return Ok(());
+            }
+
+            Commands::Tui => {
+                tui::run_tui().expect("TUI run error...");
                 return Ok(());
             }
             Commands::Clean {

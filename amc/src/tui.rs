@@ -2,8 +2,6 @@ pub mod app;
 pub mod components;
 pub mod layout;
 
-use std::io;
-
 pub fn run_tui() -> anyhow::Result<()> {
     use crossterm::{
         ExecutableCommand,
@@ -13,30 +11,31 @@ pub fn run_tui() -> anyhow::Result<()> {
     use ratatui::{Terminal, backend::CrosstermBackend};
 
     terminal::enable_raw_mode()?;
-    let mut stdout = io::stdout();
+    let mut stdout = std::io::stdout();
     stdout.execute(terminal::EnterAlternateScreen)?;
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
-    let app = app::AppState::new();
+    let mut app = app::AppState::new();
 
     loop {
         terminal.draw(|f| layout::draw(f, &app))?;
 
-        // Wait for key event
+        // waiting for key events
         if event::poll(std::time::Duration::from_millis(100))? {
             if let Event::Key(KeyEvent { code, .. }) = event::read()? {
+                // Exit only on 'q' or 'Q'
                 match code {
-                    KeyCode::Char('q') => break,
-                    _ => {}
+                    KeyCode::Char('q') | KeyCode::Char('Q') => break,
+                    _ => {
+                        app.handle_key(code);
+                    }
                 }
             }
         }
     }
 
-    // terminal.draw(|f| layout::draw(f, &app))?;
-
     terminal::disable_raw_mode()?;
-    io::stdout().execute(terminal::LeaveAlternateScreen)?;
+    std::io::stdout().execute(terminal::LeaveAlternateScreen)?;
     Ok(())
 }

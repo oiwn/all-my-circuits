@@ -97,6 +97,8 @@ enum Commands {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Run the agent CLI
+    Agent,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -130,6 +132,14 @@ fn main() -> anyhow::Result<()> {
                 return clean::handle_clean_command(
                     input, output, backup, report, dry_run,
                 );
+            }
+            Commands::Agent => {
+                let amc_dir = Path::new(".amc");
+                if !amc_dir.exists() {
+                    fs::create_dir(amc_dir)?;
+                }
+                agent_cli::run_interactive_prompt();
+                return Ok(());
             }
         }
     }

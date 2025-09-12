@@ -42,6 +42,7 @@ use std::{
 
 mod clean;
 mod config;
+mod tui;
 mod walk;
 
 use config::Config;
@@ -78,6 +79,7 @@ enum Commands {
         #[arg(short, long, default_value = ".amc.toml")]
         output: String,
     },
+    Tui,
     /// Clean null bytes and control characters from concatenated file
     Clean {
         /// Input file to clean
@@ -95,6 +97,8 @@ enum Commands {
         #[arg(long)]
         dry_run: bool,
     },
+    /// Run the agent CLI
+    Agent,
 }
 
 fn main() -> anyhow::Result<()> {
@@ -113,6 +117,11 @@ fn main() -> anyhow::Result<()> {
                 println!("Created default config file: {output}");
                 return Ok(());
             }
+
+            Commands::Tui => {
+                tui::run_tui().expect("TUI run error...");
+                return Ok(());
+            }
             Commands::Clean {
                 input,
                 output,
@@ -123,6 +132,14 @@ fn main() -> anyhow::Result<()> {
                 return clean::handle_clean_command(
                     input, output, backup, report, dry_run,
                 );
+            }
+            Commands::Agent => {
+                let amc_dir = Path::new(".amc");
+                if !amc_dir.exists() {
+                    fs::create_dir(amc_dir)?;
+                }
+                agent_cli::run_interactive_prompt();
+                return Ok(());
             }
         }
     }

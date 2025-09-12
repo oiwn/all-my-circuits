@@ -1,0 +1,49 @@
+[package]
+name = "amc"
+version = "0.3.0"
+edition = "2024"
+
+authors = ["oiwn <your.email@example.com>"]
+description = "A command-line tool for concatenating and annotating files with Git metadata"
+readme = "../README.md"
+homepage = "https://github.com/oiwn/all-my-circuits"
+repository = "https://github.com/oiwn/all-my-circuits"
+license = "../LICENSE"
+keywords = ["git", "cli", "concatenate", "files", "metadata"]
+categories = ["command-line-utilities", "development-tools"]
+
+exclude = [
+    "tmp/*",
+    "html/*",
+    ".github/*",
+    ".gitignore",
+    ".tmuxp.yaml",
+    "notes.org",
+    "output.txt",
+]
+
+[dependencies]
+agent-cli = { path = "../agent-cli" }
+anyhow = "1"
+chrono = "0.4"
+clap = { version = "4.5", features = ["derive"] }
+crossterm = "0.29"
+ego-tree = "0.10"
+# statically link vendored libgit2 
+git2 = { version = "0.20", features = ["vendored-libgit2"] }
+ignore = "0.4"
+log = "0.4"
+ratatui = "0.29.0"
+serde = { version = "1.0", features = ["derive"] }
+simple_logger = "5.0"
+toml = "0.8"
+walkdir = "2.5"
+
+[dev-dependencies]
+tempfile = "3"
+
+[[bin]]
+name = "amc"
+path = "src/main.rs"
+
+

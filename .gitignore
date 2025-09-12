@@ -30,3 +30,6 @@ Cargo.lock
 .tmuxp.yaml
 **/*.code
 amc.txt
+GEMINI.md
+CLAUDE.md
+RUST_AGENT_DESIGN.md
